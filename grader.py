@@ -9,10 +9,10 @@ import inspect
 
 
 class Submission(object):
-    def __init__(self, txtFileName, progNum):
+    def __init__(self, txtFileName, prog):
         self.loadFromFile(txtFileName)
         self.processFiles()
-        self.progNum = progNum
+        self.prog = prog
 
     def loadFromFile(self, txtFileName):
         #print "processing " + txtFileName
@@ -51,7 +51,7 @@ class Submission(object):
             print "compiling " + ' '.join(cFiles)
 
             os.system('gcc {0} -Wall {1} -o "{2}/prog{3}"'.format(
-                cflags, ' '.join(('"'+f+'"' for f in cFiles)), self.username, self.progNum))
+                cflags, ' '.join(('"'+f+'"' for f in cFiles)), self.username, self.prog.num))
 
 
 
@@ -62,12 +62,14 @@ class Submission(object):
             option = raw_input('What should I do? (n,c,e): ')
             if option == 'e':
                 exit()
-            if option == 'n':
+            elif option == 'n':
                 break
-            if option == 'c':
+            elif option == 'c':
                 self.compile()
-            if option == 'c99':
+            elif option == 'c99':
                 self.compile('-std=c99')
+            elif option == 'r':
+                self.prog.runTestCases(self.username)
 
 
     def processFiles(self):
@@ -80,13 +82,13 @@ class Submission(object):
 
 
 
-def processZip():
+def processZip(prog):
     txtFiles = glob.glob("zip/*.txt")
     #print txtFiles
     #print len(txtFiles)
     submissions = []
     for f in txtFiles:
-        submissions.append(Submission(f, 1))
+        submissions.append(Submission(f, prog))
     return submissions
 
 
@@ -94,9 +96,6 @@ def processZip():
 
 
 if __name__ == "__main__":
-    submissions = processZip()
-    submissions.sort(key = lambda s: s.username)
-    print "Found {0} submissions".format(len(submissions))
 
     try:
         print "Grading for assignment: {0}".format(sys.argv[1])
@@ -114,18 +113,10 @@ if __name__ == "__main__":
         print "   grader.py <prog-name> [<commands>]:"
         exit()
 
-    prog.latePoints(submissions[0].submittedDate)
+    submissions = processZip(prog)
+    submissions.sort(key = lambda s: s.username)
+    print "Found {0} submissions".format(len(submissions))
+
     for s in submissions:
-        print "{0} - {1} - {2}".format(s.username, s.submittedDate, prog.latePoints(s.submittedDate))
-
-    exit()
-
-    if len(sys.argv) > 1:
-        matches = (s for s in submissions if s.username == sys.argv[1])
-        for s in matches:
-            s.interactiveGrading()
-
-    else:
-        for s in submissions:
-            s.interactiveGrading()
+        s.interactiveGrading()
 
