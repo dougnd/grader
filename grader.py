@@ -46,7 +46,7 @@ class Submission(object):
 
         elif len(cFiles) == 1:
             print "compiling " + cFiles[0]
-            os.system("gcc -Wall {0} -o {1}/prog{2}".format(cFiles[0], self.username, self.progNum))
+            os.system('gcc -std=c99 -Wall "{0}" -o "{1}/prog{2}"'.format(cFiles[0], self.username, self.progNum))
 
         else:
             #objfiles = [f+'.o' for f in cFiles]
@@ -55,7 +55,7 @@ class Submission(object):
                 #os.system("gcc -Wall -c {0} -o {1}".format(f, o))
 
 
-            os.system("gcc -Wall {0} -o {1}/prog{2}".format(' '.join(cFiles), self.username, self.progNum))
+            os.system('gcc -std=c99 -Wall {0} -o "{1}/prog{2}"'.format(' '.join(('"'+f+'"' for f in cFiles)), self.username, self.progNum))
 
 
 
@@ -66,6 +66,15 @@ class Submission(object):
     def interactiveGrading(self):
         print "Grading for {0}, submitted {1}".format(self.username, self.submittedDate)
         self.compile()
+        while True:
+            option = raw_input('What should I do? (n,c,e): ')
+            if option == 'e':
+                exit()
+            if option == 'n':
+                break
+            if option == 'c':
+                self.compile()
+
 
     def processFiles(self):
         if not os.path.exists(self.username):
@@ -93,6 +102,8 @@ def processZip():
 if __name__ == "__main__":
     submissions = processZip()
     print "Found {0} submissions".format(len(submissions))
+
+    submissions.sort(key = lambda s: s.username)
 
     if len(sys.argv) > 1:
         matches = (s for s in submissions if s.username == sys.argv[1])
