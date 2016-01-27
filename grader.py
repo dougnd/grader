@@ -4,6 +4,8 @@ import os
 import shutil
 from datetime import datetime
 import sys
+import assignment
+import inspect
 
 
 class Submission(object):
@@ -38,28 +40,18 @@ class Submission(object):
         #print self.mangledNames
         #print self.fileNames
 
-    def compile(self):
+    def compile(self, cflags=''):
         cFiles = glob.glob(self.username +"/*.c")
 
         if len(cFiles) == 0:
             print "ERROR, no .c files!"
-
-        elif len(cFiles) == 1:
-            print "compiling " + cFiles[0]
-            os.system('gcc -std=c99 -Wall "{0}" -o "{1}/prog{2}"'.format(cFiles[0], self.username, self.progNum))
+            return False
 
         else:
-            #objfiles = [f+'.o' for f in cFiles]
-            #for f,o in zip(cFiles, objfiles):
-                #print "compiling " + f
-                #os.system("gcc -Wall -c {0} -o {1}".format(f, o))
+            print "compiling " + ' '.join(cFiles)
 
-
-            os.system('gcc -std=c99 -Wall {0} -o "{1}/prog{2}"'.format(' '.join(('"'+f+'"' for f in cFiles)), self.username, self.progNum))
-
-
-
-        
+            os.system('gcc {0} -Wall {1} -o "{2}/prog{3}"'.format(
+                cflags, ' '.join(('"'+f+'"' for f in cFiles)), self.username, self.progNum))
 
 
 
@@ -74,6 +66,8 @@ class Submission(object):
                 break
             if option == 'c':
                 self.compile()
+            if option == 'c99':
+                self.compile('-std=c99')
 
 
     def processFiles(self):
@@ -101,9 +95,30 @@ def processZip():
 
 if __name__ == "__main__":
     submissions = processZip()
+    submissions.sort(key = lambda s: s.username)
     print "Found {0} submissions".format(len(submissions))
 
-    submissions.sort(key = lambda s: s.username)
+    try:
+        print "Grading for assignment: {0}".format(sys.argv[1])
+        prog = getattr(assignment, sys.argv[1])()
+    except AttributeError:
+        print "Error: could not find program {0}".format(sys.argv[1])
+        #knownProgs = (name for name,obj in inspect.getmembers(assignment) if re.search("prog", name))
+        knownProgs = (name for name in assignment.__dict__ if re.search("prog", name))
+        print "known programs: {0}".format(', '.join(knownProgs))
+        exit()
+
+    except IndexError:
+        print "Not enough arguments."
+        print "usage:"
+        print "   grader.py <prog-name> [<commands>]:"
+        exit()
+
+    prog.latePoints(submissions[0].submittedDate)
+    for s in submissions:
+        print "{0} - {1} - {2}".format(s.username, s.submittedDate, prog.latePoints(s.submittedDate))
+
+    exit()
 
     if len(sys.argv) > 1:
         matches = (s for s in submissions if s.username == sys.argv[1])
@@ -113,3 +128,4 @@ if __name__ == "__main__":
     else:
         for s in submissions:
             s.interactiveGrading()
+
