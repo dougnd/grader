@@ -18,4 +18,4 @@ class prog1(Assignment):
 
 class prog2(Assignment):
     def __init__(self):
-        super(prog1, self).__init__('2016-1-20')
+        super(prog1, self).__init__('2016-2-1')
